@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <uv.h>
 
-#include "pty.h"
+#include "os_pty.h"
 
 // client message
 #define INPUT           '0'

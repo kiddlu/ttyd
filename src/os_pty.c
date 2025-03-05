@@ -11,7 +11,7 @@
 
 #include <pty.h>
 
-#include "pty.h"
+#include "os_pty.h"
 #include "utils.h"
 
 static void alloc_cb(uv_handle_t *unused, size_t suggested_size, uv_buf_t *buf)

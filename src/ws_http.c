@@ -3,8 +3,8 @@
 #include <zlib.h>
 
 #include "html.h"
-#include "server.h"
 #include "utils.h"
+#include "ws_server.h"
 
 enum
 {

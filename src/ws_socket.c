@@ -6,9 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "pty.h"
-#include "server.h"
+#include "os_pty.h"
 #include "utils.h"
+#include "ws_server.h"
 
 // initial message list
 static char initial_cmds[] = {SET_WINDOW_TITLE, SET_PREFERENCES};

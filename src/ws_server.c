@@ -1,4 +1,4 @@
-#include "server.h"
+#include "ws_server.h"
 
 #include <errno.h>
 #include <getopt.h>
