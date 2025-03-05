@@ -30,10 +30,4 @@ int get_sig(const char *sig_name);
 
 // Open uri with the default application of system
 int open_uri(char *uri);
-
-#ifdef _WIN32
-char       *strsep(char **sp, char *sep);
-const char *quote_arg(const char *arg);
-void        print_error(char *func);
 #endif
-#endif  // TTYD_UTIL_H

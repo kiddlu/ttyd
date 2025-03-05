@@ -5,17 +5,6 @@
 #include <stdint.h>
 #include <uv.h>
 
-#ifdef _WIN32
-#ifndef HPCON
-#define HPCON VOID *
-#endif
-#ifndef PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE
-#define PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE 0x00020016
-#endif
-
-bool conpty_init();
-#endif
-
 typedef struct
 {
     char  *base;
@@ -31,15 +20,10 @@ struct pty_process_
 {
     int      pid, exit_code, exit_signal;
     uint16_t columns, rows;
-#ifdef _WIN32
-    STARTUPINFOEXW si;
-    HPCON          pty;
-    HANDLE         handle;
-    HANDLE         wait;
-#else
+
     pid_t       pty;
     uv_thread_t tid;
-#endif
+
     char **argv;
     char **envp;
     char  *cwd;

@@ -359,14 +359,6 @@ int main(int argc, char **argv)
         print_help();
         return 0;
     }
-#ifdef _WIN32
-    if (!conpty_init())
-    {
-        fprintf(stderr,
-                "ERROR: ConPTY init failed! Make sure you are on Windows 10 1809 or later.");
-        return 1;
-    }
-#endif
 
     int start = calc_command_start(argc, argv);
     server    = server_new(argc, argv, start);
@@ -396,10 +388,6 @@ int main(int argc, char **argv)
     char ca_path[1024]     = "";
 
     struct json_object *client_prefs = json_object_new_object();
-
-#ifdef _WIN32
-    json_object_object_add(client_prefs, "isWindows", json_object_new_boolean(true));
-#endif
 
     // parse command line options
     int c;
