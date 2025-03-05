@@ -1,11 +1,11 @@
 #ifndef TTYD_UTIL_H
 #define TTYD_UTIL_H
 
-#define container_of(ptr, type, member)                \
-  ({                                                   \
-    const typeof(((type *)0)->member) *__mptr = (ptr); \
-    (type *)((char *)__mptr - offsetof(type, member)); \
-  })
+#define container_of(ptr, type, member)                    \
+    ({                                                     \
+        const typeof(((type *)0)->member) *__mptr = (ptr); \
+        (type *)((char *)__mptr - offsetof(type, member)); \
+    })
 
 // malloc with NULL check
 void *xmalloc(size_t size);
@@ -32,8 +32,8 @@ int get_sig(const char *sig_name);
 int open_uri(char *uri);
 
 #ifdef _WIN32
-char *strsep(char **sp, char *sep);
+char       *strsep(char **sp, char *sep);
 const char *quote_arg(const char *arg);
-void print_error(char *func);
+void        print_error(char *func);
 #endif
 #endif  // TTYD_UTIL_H

@@ -6,14 +6,8 @@ project(ttyd VERSION 1.7.7 LANGUAGES C)
 
 set(TTYD_VERSION "${PROJECT_VERSION}")
 
-include(GetGitVersion)
-get_git_version(GIT_VERSION SEM_VER)
-get_git_head(GIT_COMMIT)
 if("${SEM_VER}" VERSION_GREATER "${TTYD_VERSION}")
     set(TTYD_VERSION "${SEM_VER}")
-endif()
-if(NOT "${GIT_COMMIT}" STREQUAL "")
-    set(TTYD_VERSION "${TTYD_VERSION}-${GIT_COMMIT}")
 endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_GNU_SOURCE")
