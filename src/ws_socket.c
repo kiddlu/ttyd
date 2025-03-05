@@ -93,23 +93,23 @@ static void pty_ctx_free(pty_ctx_t *ctx)
     free(ctx);
 }
 
-static void process_read_cb(pty_process *process, pty_buf_t *buf, bool eof)
+static void process_read_cb(ptyProc *process, buf_t *buf, bool eof)
 {
     pty_ctx_t *ctx = (pty_ctx_t *)process->ctx;
     if (ctx->ws_closed)
     {
-        pty_buf_free(buf);
+        buf_free(buf);
         return;
     }
 
-    if (eof && !process_running(process))
+    if (eof && !pty_running(process))
         ctx->pss->lws_close_status = process->exit_code == 0 ? 1000 : 1006;
     else
         ctx->pss->pty_buf = buf;
     lws_callback_on_writable(ctx->pss->wsi);
 }
 
-static void process_exit_cb(pty_process *process)
+static void process_exit_cb(ptyProc *process)
 {
     pty_ctx_t *ctx = (pty_ctx_t *)process->ctx;
     if (ctx->ws_closed)
@@ -173,8 +173,8 @@ static char **build_env(struct pss_tty *pss)
 
 static bool spawn_process(struct pss_tty *pss, uint16_t columns, uint16_t rows)
 {
-    pty_process *process =
-        process_init((void *)pty_ctx_init(pss), server->loop, build_args(pss), build_env(pss));
+    ptyProc *process =
+        pty_init((void *)pty_ctx_init(pss), server->loop, build_args(pss), build_env(pss));
     if (server->cwd != NULL)
         process->cwd = strdup(server->cwd);
     if (columns > 0)
@@ -184,7 +184,7 @@ static bool spawn_process(struct pss_tty *pss, uint16_t columns, uint16_t rows)
     if (pty_spawn(process, process_read_cb, process_exit_cb) != 0)
     {
         lwsl_err("pty_spawn: %d (%s)\n", errno, strerror(errno));
-        process_free(process);
+        pty_free(process);
         return false;
     }
     lwsl_notice("started process, pid: %d\n", process->pid);
@@ -194,7 +194,7 @@ static bool spawn_process(struct pss_tty *pss, uint16_t columns, uint16_t rows)
     return true;
 }
 
-static void wsi_output(struct lws *wsi, pty_buf_t *buf)
+static void wsi_output(struct lws *wsi, buf_t *buf)
 {
     if (buf == NULL)
         return;
@@ -336,7 +336,7 @@ int callback_tty(struct lws               *wsi,
             if (pss->pty_buf != NULL)
             {
                 wsi_output(wsi, pss->pty_buf);
-                pty_buf_free(pss->pty_buf);
+                buf_free(pss->pty_buf);
                 pss->pty_buf = NULL;
                 pty_resume(pss->process);
             }
@@ -376,7 +376,7 @@ int callback_tty(struct lws               *wsi,
                 case INPUT:
                     if (!server->writable)
                         break;
-                    int err = pty_write(pss->process, pty_buf_init(pss->buffer + 1, pss->len - 1));
+                    int err = pty_write(pss->process, buf_init(pss->buffer + 1, pss->len - 1));
                     if (err)
                     {
                         lwsl_err("uv_write: %s (%s)\n", uv_err_name(err), uv_strerror(err));
@@ -447,7 +447,7 @@ int callback_tty(struct lws               *wsi,
             if (pss->buffer != NULL)
                 free(pss->buffer);
             if (pss->pty_buf != NULL)
-                pty_buf_free(pss->pty_buf);
+                buf_free(pss->pty_buf);
             for (int i = 0; i < pss->argc; i++)
             {
                 free(pss->args[i]);
@@ -456,7 +456,7 @@ int callback_tty(struct lws               *wsi,
             if (pss->process != NULL)
             {
                 ((pty_ctx_t *)pss->process->ctx)->ws_closed = true;
-                if (process_running(pss->process))
+                if (pty_running(pss->process))
                 {
                     pty_pause(pss->process);
                     lwsl_notice("killing process, pid: %d\n", pss->process->pid);

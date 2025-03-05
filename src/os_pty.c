@@ -30,28 +30,10 @@ static void async_free_cb(uv_handle_t *handle)
     free((uv_async_t *)handle->data);
 }
 
-pty_buf_t *pty_buf_init(char *base, size_t len)
-{
-    pty_buf_t *buf = xmalloc(sizeof(pty_buf_t));
-    buf->base      = xmalloc(len);
-    memcpy(buf->base, base, len);
-    buf->len = len;
-    return buf;
-}
-
-void pty_buf_free(pty_buf_t *buf)
-{
-    if (buf == NULL)
-        return;
-    if (buf->base != NULL)
-        free(buf->base);
-    free(buf);
-}
-
 static void read_cb(uv_stream_t *stream, ssize_t n, const uv_buf_t *buf)
 {
     uv_read_stop(stream);
-    pty_process *process = (pty_process *)stream->data;
+    ptyProc *process = (ptyProc *)stream->data;
     if (n <= 0)
     {
         if (n == UV_ENOBUFS || n == 0)
@@ -59,7 +41,7 @@ static void read_cb(uv_stream_t *stream, ssize_t n, const uv_buf_t *buf)
         process->read_cb(process, NULL, true);
         goto done;
     }
-    process->read_cb(process, pty_buf_init(buf->base, (size_t)n), false);
+    process->read_cb(process, buf_init(buf->base, (size_t)n), false);
 
 done:
     free(buf->base);
@@ -67,15 +49,15 @@ done:
 
 static void write_cb(uv_write_t *req, int unused)
 {
-    pty_buf_t *buf = (pty_buf_t *)req->data;
-    pty_buf_free(buf);
+    buf_t *buf = (buf_t *)req->data;
+    buf_free(buf);
     free(req);
 }
 
-pty_process *process_init(void *ctx, uv_loop_t *loop, char *argv[], char *envp[])
+ptyProc *pty_init(void *ctx, uv_loop_t *loop, char *argv[], char *envp[])
 {
-    pty_process *process = xmalloc(sizeof(pty_process));
-    memset(process, 0, sizeof(pty_process));
+    ptyProc *process = xmalloc(sizeof(ptyProc));
+    memset(process, 0, sizeof(ptyProc));
     process->ctx       = ctx;
     process->loop      = loop;
     process->argv      = argv;
@@ -86,12 +68,12 @@ pty_process *process_init(void *ctx, uv_loop_t *loop, char *argv[], char *envp[]
     return process;
 }
 
-bool process_running(pty_process *process)
+bool pty_running(ptyProc *process)
 {
     return process != NULL && process->pid > 0 && uv_kill(process->pid, 0) == 0;
 }
 
-void process_free(pty_process *process)
+void pty_free(ptyProc *process)
 {
     if (process == NULL)
         return;
@@ -113,7 +95,7 @@ void process_free(pty_process *process)
     free(process->envp);
 }
 
-void pty_pause(pty_process *process)
+void pty_pause(ptyProc *process)
 {
     if (process == NULL)
         return;
@@ -122,7 +104,7 @@ void pty_pause(pty_process *process)
     uv_read_stop((uv_stream_t *)process->out);
 }
 
-void pty_resume(pty_process *process)
+void pty_resume(ptyProc *process)
 {
     if (process == NULL)
         return;
@@ -132,11 +114,11 @@ void pty_resume(pty_process *process)
     uv_read_start((uv_stream_t *)process->out, alloc_cb, read_cb);
 }
 
-int pty_write(pty_process *process, pty_buf_t *buf)
+int pty_write(ptyProc *process, buf_t *buf)
 {
     if (process == NULL)
     {
-        pty_buf_free(buf);
+        buf_free(buf);
         return UV_ESRCH;
     }
     uv_buf_t    b   = uv_buf_init(buf->base, buf->len);
@@ -145,7 +127,7 @@ int pty_write(pty_process *process, pty_buf_t *buf)
     return uv_write(req, (uv_stream_t *)process->in, &b, 1, write_cb);
 }
 
-bool pty_resize(pty_process *process)
+bool pty_resize(ptyProc *process)
 {
     if (process == NULL)
         return false;
@@ -156,7 +138,7 @@ bool pty_resize(pty_process *process)
     return ioctl(process->pty, TIOCSWINSZ, &size) == 0;
 }
 
-bool pty_kill(pty_process *process, int sig)
+bool pty_kill(ptyProc *process, int sig)
 {
     if (process == NULL)
         return false;
@@ -189,7 +171,7 @@ static bool fd_duplicate(int fd, uv_pipe_t *pipe)
 
 static void wait_cb(void *arg)
 {
-    pty_process *process = (pty_process *)arg;
+    ptyProc *process = (ptyProc *)arg;
 
     pid_t pid;
     int   stat;
@@ -213,14 +195,14 @@ static void wait_cb(void *arg)
 
 static void async_cb(uv_async_t *async)
 {
-    pty_process *process = (pty_process *)async->data;
+    ptyProc *process = (ptyProc *)async->data;
     process->exit_cb(process);
 
     uv_close((uv_handle_t *)async, async_free_cb);
-    process_free(process);
+    pty_free(process);
 }
 
-int pty_spawn(pty_process *process, pty_read_cb read_cb, pty_exit_cb exit_cb)
+int pty_spawn(ptyProc *process, pty_read_cb read_cb, pty_exit_cb exit_cb)
 {
     int status = 0;
 

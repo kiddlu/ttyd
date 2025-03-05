@@ -21,7 +21,7 @@ else()
     set(CMAKE_C_STANDARD 99)
 endif()
 
-set(SOURCE_FILES src/utils.c src/os_pty.c src/ws_socket.c src/ws_http.c src/ws_server.c)
+set(SOURCE_FILES src/utils.c src/buf.c src/os_pty.c src/ws_socket.c src/ws_http.c src/ws_server.c)
 
 include(FindPackageHandleStandardArgs)
 

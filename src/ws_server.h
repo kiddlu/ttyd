@@ -53,8 +53,8 @@ struct pss_tty
     char       *buffer;
     size_t      len;
 
-    pty_process *process;
-    pty_buf_t   *pty_buf;
+    ptyProc *process;
+    buf_t   *pty_buf;
 
     int lws_close_status;
 };

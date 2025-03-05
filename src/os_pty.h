@@ -5,18 +5,13 @@
 #include <stdint.h>
 #include <uv.h>
 
-typedef struct
-{
-    char  *base;
-    size_t len;
-} pty_buf_t;
+#include "buf.h"
 
-struct pty_process_;
-typedef struct pty_process_ pty_process;
-typedef void (*pty_read_cb)(pty_process *, pty_buf_t *, bool);
-typedef void (*pty_exit_cb)(pty_process *);
+typedef struct _ptyProc_ ptyProc;
+typedef void (*pty_read_cb)(ptyProc *, buf_t *, bool);
+typedef void (*pty_exit_cb)(ptyProc *);
 
-struct pty_process_
+struct _ptyProc_
 {
     int      pid, exit_code, exit_signal;
     uint16_t columns, rows;
@@ -39,16 +34,14 @@ struct pty_process_
     void       *ctx;
 };
 
-pty_buf_t   *pty_buf_init(char *base, size_t len);
-void         pty_buf_free(pty_buf_t *buf);
-pty_process *process_init(void *ctx, uv_loop_t *loop, char *argv[], char *envp[]);
-bool         process_running(pty_process *process);
-void         process_free(pty_process *process);
-int          pty_spawn(pty_process *process, pty_read_cb read_cb, pty_exit_cb exit_cb);
-void         pty_pause(pty_process *process);
-void         pty_resume(pty_process *process);
-int          pty_write(pty_process *process, pty_buf_t *buf);
-bool         pty_resize(pty_process *process);
-bool         pty_kill(pty_process *process, int sig);
+ptyProc *pty_init(void *ctx, uv_loop_t *loop, char *argv[], char *envp[]);
+bool     pty_running(ptyProc *process);
+void     pty_free(ptyProc *process);
+int      pty_spawn(ptyProc *process, pty_read_cb read_cb, pty_exit_cb exit_cb);
+void     pty_pause(ptyProc *process);
+void     pty_resume(ptyProc *process);
+int      pty_write(ptyProc *process, buf_t *buf);
+bool     pty_resize(ptyProc *process);
+bool     pty_kill(ptyProc *process, int sig);
 
 #endif  // TTYD_PTY_H
